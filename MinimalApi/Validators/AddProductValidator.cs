@@ -9,6 +9,7 @@ namespace MinimalApi.Validators
         {
             RuleFor(x => x.Name)
                 .NotNull()
+                .NotEmpty()
                 .MaximumLength(100);
 
             RuleFor(x => x.Description)
