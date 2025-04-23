@@ -1,11 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Hosting;
-using MinimalApi;
 using MinimalApi.DTO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -14,12 +8,12 @@ using Xunit.Abstractions;
 
 namespace MinimalApi_Test.IntegerationTests
 {
-    public class ProductApiTests : IClassFixture<WebApplicationFactory<Program>>
+    public class ProductApiTests : IClassFixture<TestWebApplication>
     {
-        private readonly WebApplicationFactory<Program> factory;
+        private readonly TestWebApplication factory;
         private readonly HttpClient client;
         private readonly ITestOutputHelper output;
-        public ProductApiTests(WebApplicationFactory<Program> factory, ITestOutputHelper output)
+        public ProductApiTests(TestWebApplication factory, ITestOutputHelper output)
         {
             this.factory = factory;
             this.client = factory.CreateClient();
@@ -30,7 +24,7 @@ namespace MinimalApi_Test.IntegerationTests
         public async Task GetAllProducts_Test(string path)
         {
             var response = await client.GetAsync(path);
-            output.WriteLine(await response.Content.ReadAsStringAsync());
+            output.WriteLine((await response.Content.ReadAsStringAsync()));
             Assert.NotNull(response);
         }
         public static IEnumerable<object[]> CreateData =>
@@ -41,7 +35,7 @@ namespace MinimalApi_Test.IntegerationTests
             };
         [Theory]
         [MemberData(nameof(CreateData))]
-        public async Task CreateProduct_Test(AddProductDto product)
+        public async Task CreateProduct_With_ValidationProblems(AddProductDto product)
         {
             var response = await client.PostAsJsonAsync("/product/add", product);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -56,6 +50,18 @@ namespace MinimalApi_Test.IntegerationTests
                 }
             }
             Assert.NotNull(problemResult?.Errors);
+        }
+        [Fact]
+        public async Task CreateProduct_Without_ValidationProblems()
+        {
+            var product = new AddProductDto
+            {
+                Name = "Nike Shoe",
+                Description = "Red and blue colors",
+                Price = 15
+            };
+            var response = await client.PostAsJsonAsync("/product/add", product);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         }
     }
 }
