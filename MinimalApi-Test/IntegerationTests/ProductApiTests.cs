@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using MinimalApi.DTO;
+using MinimalApi.Infrastructure.Models;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -24,8 +25,9 @@ namespace MinimalApi_Test.IntegerationTests
         public async Task GetAllProducts_Test(string path)
         {
             var response = await client.GetAsync(path);
+            var count = (await response.Content.ReadFromJsonAsync<IEnumerable<Product>>()).Count();
             output.WriteLine((await response.Content.ReadAsStringAsync()));
-            Assert.NotNull(response);
+            Assert.True(count > 0);
         }
         public static IEnumerable<object[]> CreateData =>
             new List<object[]>
@@ -62,6 +64,25 @@ namespace MinimalApi_Test.IntegerationTests
             };
             var response = await client.PostAsJsonAsync("/product/add", product);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+        [Fact]
+        public async Task DeleteProduct_With_ValidId()
+        {
+            var newProduct = new AddProductDto
+            {
+                Name = "Test",
+                Description = "Test description",
+                Price = 15
+            };
+            var response = await client.PostAsJsonAsync("/product/add", newProduct);
+            if(response.StatusCode == HttpStatusCode.Created)
+            {
+                var id = response.Headers.Location.OriginalString.Split("/").Last();
+                var res = await client.DeleteAsync($"/product/delete/{id}");
+                Assert.True(res.StatusCode == HttpStatusCode.OK);
+                var notfound = await client.GetAsync($"/product/{id}");
+                Assert.True(HttpStatusCode.BadRequest == notfound.StatusCode);
+            }
         }
     }
 }
