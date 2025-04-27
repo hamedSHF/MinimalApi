@@ -33,7 +33,8 @@ namespace MinimalApi
 
             app.MapGroup("/product")
                 .MapProductEndpoints()
-                .WithTags("Product endpoints");
+                .WithTags("Product endpoints")
+                .WithOpenApi();
             app.UseHttpsRedirection();
 
             app.Run();

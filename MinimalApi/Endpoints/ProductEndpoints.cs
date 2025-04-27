@@ -8,6 +8,7 @@ using MinimalApi.Infrastructure;
 using MinimalApi.Infrastructure.Models;
 using MinimalApi.Mappers;
 using MinimalApi.Validators;
+using System.Net;
 
 namespace MinimalApi.Endpoints
 {
@@ -15,11 +16,36 @@ namespace MinimalApi.Endpoints
     {
         public static RouteGroupBuilder MapProductEndpoints(this RouteGroupBuilder builder)
         {
-            builder.MapPost("/add", AddProduct);
-            builder.MapGet("", GetProducts);
-            builder.MapGet("/{id:int}", GetProduct);
-            builder.MapPut("", UpdateProduct);
-            builder.MapDelete("/delete/{id:int}", DeleteProduct);
+            builder.MapPost("/add", AddProduct)
+                .WithName("Add new prodouct")
+                .WithDescription("Add new product")
+                .WithSummary("Add new product")
+                .Produces(StatusCodes.Status201Created, typeof(Results))
+                .ProducesValidationProblem();
+            builder.MapGet("", GetProducts)
+                .WithName("Get all products")
+                .WithDescription("Get all products")
+                .WithSummary("Get all products")
+                .Produces<List<IEnumerable<Product>>>();
+            builder.MapGet("/{id:int}", GetProduct)
+                .WithName("Get a product with id")
+                .WithDescription("Get a single product with id")
+                .WithSummary("Get a product using id")
+                .Produces<Ok<Product>>()
+                .ProducesValidationProblem();
+            builder.MapPut("", UpdateProduct)
+                .WithName("Fully update")
+                .WithDescription("Fully update product")
+                .WithSummary("Full update of a product")
+                .Produces(StatusCodes.Status200OK, typeof(Results))
+                .ProducesProblem(StatusCodes.Status400BadRequest)
+                .ProducesValidationProblem();
+            builder.MapDelete("/delete/{id:int}", DeleteProduct)
+                .WithName("Delete a product")
+                .WithDescription("Delete a product using id")
+                .WithSummary("Delete a product")
+                .Produces(StatusCodes.Status200OK, typeof(Results))
+                .ProducesProblem(StatusCodes.Status400BadRequest);
 
             return builder;
         }

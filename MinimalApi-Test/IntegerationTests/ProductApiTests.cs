@@ -3,6 +3,7 @@ using MinimalApi.DTO;
 using MinimalApi.Infrastructure.Models;
 using System.Net;
 using System.Net.Http.Json;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit.Abstractions;
@@ -83,6 +84,13 @@ namespace MinimalApi_Test.IntegerationTests
                 var notfound = await client.GetAsync($"/product/{id}");
                 Assert.True(HttpStatusCode.BadRequest == notfound.StatusCode);
             }
+        }
+        [Fact]
+        public async Task DeleteProduct_With_InvalidId()
+        {
+            int invalidId = -1;
+            var response = await client.DeleteAsync($"/product/delete/{invalidId}");
+            Assert.True(response.StatusCode == HttpStatusCode.BadRequest);
         }
     }
 }
