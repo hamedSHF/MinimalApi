@@ -20,10 +20,29 @@ namespace MinimalApi
             builder.Services.AddDbContext<ShopDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("MinimalApiDb")));
 
+            builder.Services.AddMemoryCache();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowSpecificOrigins", policy =>
+                {
+                    policy.WithOrigins("https://www.example.com")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+                });
+                options.AddPolicy("AllowAllOrigins", policy =>
+                {
+                    policy.AllowAnyOrigin();
+                    policy.AllowAnyMethod();
+                });
+            });
+
             builder.Services.AddValidatorsFromAssemblyContaining<AddProductValidator>();
 
             var app = builder.Build();
 
+            app.UseCors();
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -34,7 +53,8 @@ namespace MinimalApi
             app.MapGroup("/product")
                 .MapProductEndpoints()
                 .WithTags("Product endpoints")
-                .WithOpenApi();
+                .WithOpenApi()
+                .RequireCors("AllowAllOrigins");
             app.UseHttpsRedirection();
 
             app.Run();

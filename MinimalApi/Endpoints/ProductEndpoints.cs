@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using MinimalApi.DTO;
 using MinimalApi.Infrastructure;
@@ -14,6 +15,7 @@ namespace MinimalApi.Endpoints
 {
     public static class ProductEndpoints
     {
+        const string cacheKey = "product_list";
         public static RouteGroupBuilder MapProductEndpoints(this RouteGroupBuilder builder)
         {
             builder.MapPost("/add", AddProduct)
@@ -33,6 +35,11 @@ namespace MinimalApi.Endpoints
                 .WithSummary("Get a product using id")
                 .Produces<Ok<Product>>()
                 .ProducesValidationProblem();
+            builder.MapGet("/cached", GetProductsWithCache)
+                .WithName("Get cached products")
+                .WithDescription("Get cached products")
+                .WithSummary("Get cached products")
+                .Produces<IEnumerable<Product>>();
             builder.MapPut("", UpdateProduct)
                 .WithName("Fully update")
                 .WithDescription("Fully update product")
@@ -67,6 +74,17 @@ namespace MinimalApi.Endpoints
             ShopDbContext dbContext)
         {
             return await dbContext.Products.ToListAsync();
+        }
+        public static async Task<IEnumerable<Product>> GetProductsWithCache(
+            IMemoryCache cache,
+            ShopDbContext dbContext)
+        {
+            if(!cache.TryGetValue(cacheKey, out IEnumerable<Product> products))
+            {
+                products = await dbContext.Products.ToListAsync();
+                cache.Set(cacheKey, products, TimeSpan.FromMinutes(5));
+            }
+            return products;
         }
         public static async Task<Results<Ok<Product> ,BadRequest<string>>> GetProduct(
             [FromRoute] int id,
