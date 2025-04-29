@@ -18,6 +18,7 @@ namespace MinimalApi.Endpoints
         const string cacheKey = "product_list";
         public static RouteGroupBuilder MapProductEndpoints(this RouteGroupBuilder builder)
         {
+            builder.MapGet("/exception", ExceptionTest);
             builder.MapPost("/add", AddProduct)
                 .WithName("Add new prodouct")
                 .WithDescription("Add new product")
@@ -55,6 +56,10 @@ namespace MinimalApi.Endpoints
                 .ProducesProblem(StatusCodes.Status400BadRequest);
 
             return builder;
+        }
+        public static void ExceptionTest()
+        {
+            throw new AccessViolationException();
         }
         public static async Task<Results<Created ,ValidationProblem>> AddProduct(
             AddProductDto dto,
