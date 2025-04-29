@@ -4,6 +4,7 @@ using MinimalApi.Infrastructure;
 using FluentValidation;
 using MinimalApi.Validators;
 using MinimalApi.Endpoints;
+using AspNetCoreRateLimit;
 
 namespace MinimalApi
 {
@@ -20,6 +21,23 @@ namespace MinimalApi
             options.UseSqlServer(builder.Configuration.GetConnectionString("MinimalApiDb")));
 
             builder.Services.AddMemoryCache();
+
+            builder.Services.Configure<IpRateLimitOptions>(options =>
+            {
+                options.GeneralRules = new List<RateLimitRule>
+                {
+                    new RateLimitRule
+                    {
+                        Endpoint = "*",
+                        Limit = 5,
+                        Period = "1m"
+                    }
+                };
+            });
+
+            builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+
+            builder.Services.AddInMemoryRateLimiting();
 
             builder.Services.AddCors(options =>
             {
@@ -42,6 +60,8 @@ namespace MinimalApi
             var app = builder.Build();
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
+
+            app.UseIpRateLimiting();
             app.UseCors();
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
