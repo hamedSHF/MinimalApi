@@ -92,5 +92,20 @@ namespace MinimalApi_Test.IntegerationTests
             var response = await client.DeleteAsync($"/product/delete/{invalidId}");
             Assert.True(response.StatusCode == HttpStatusCode.BadRequest);
         }
+        [Fact]
+        public async Task RateLimit_Test()
+        {
+            bool isBlockedByRateLimiter;
+            while(true)
+            {
+                var result = await client.GetAsync("/product");
+                if(result.StatusCode == HttpStatusCode.TooManyRequests)
+                {
+                    isBlockedByRateLimiter = true;
+                    break;
+                }
+            }
+            Assert.True(isBlockedByRateLimiter);
+        }
     }
 }
